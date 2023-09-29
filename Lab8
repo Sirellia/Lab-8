@@ -1,68 +1,98 @@
+import numpy as np
 import tkinter as tk
-def calculate_diagonal_product():
-    matrix_input = input_text.get("1.0", "end-1c")
-    rows = matrix_input.strip().split('\n')
-
-    if len(rows) != 2:
-        result_text.config(state="normal")
-        result_text.delete("1.0", tk.END)
-        result_text.insert("1.0", "Введите матрицу 2х2.")
-        result_text.config(state="disabled")
-        return
-
-    matrix = []
-
-    for row in rows:
-        values = row.split()
-        if len(values) != 2:
-            result_text.config(state="normal")
-            result_text.delete("1.0", tk.END)
-            result_text.insert("1.0", "Введите матрицу 2х2.")
-            result_text.config(state="disabled")
-            return
-        matrix.append(list(map(int, values)))
-
-    sub_matrices = [
-        [matrix[0][0]], [matrix[0][1]],
-        [matrix[1][0]], [matrix[1][1]]
-    ]
-
-    combinations = [
-        [sub_matrices[0], sub_matrices[1], sub_matrices[2], sub_matrices[3]],
-        [sub_matrices[0], sub_matrices[1], sub_matrices[3], sub_matrices[2]],
-        [sub_matrices[1], sub_matrices[0], sub_matrices[2], sub_matrices[3]],
-        [sub_matrices[1], sub_matrices[0], sub_matrices[3], sub_matrices[2]]
-    ]
-
-    max_product = float('-inf')
-    best_matrix = None
-
-    for i, c in enumerate(combinations):
-        new_matrix = [[c[0][0], c[1][0]], [c[2][0], c[3][0]]]
-        diagonal_product = new_matrix[0][0] * new_matrix[1][1]
-
-        if diagonal_product > max_product:
-            max_product = diagonal_product
-            best_matrix = new_matrix
-
-    result_text.config(state="normal")
-    result_text.delete("1.0", tk.END)
-    result_text.insert("1.0", "Best Matrix:\n")
-    for row in best_matrix:
-        result_text.insert(tk.END, ' '.join(map(str, row)) + "\n")
-    result_text.insert(tk.END, f"Произведение на матрице: {max_product}")
-    result_text.config(state="disabled")
+from tkinter import ttk
 
 
-root = tk.Tk()
-root.title("Произведение на главной диагонали")
+class MatrixPermutationApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Matrix Permutation")
 
-input_text = tk.Text(root, width=20, height=5)
-input_text.pack()
+        self.label = ttk.Label(root, text="Введите размер подматрицы:")
+        self.label.pack()
 
-calculate_button = tk.Button(root, text="Посчитать", command=calculate_diagonal_product)
-calculate_button.pack()
+        self.size_entry = ttk.Entry(root)
+        self.size_entry.pack()
 
-result_text = tk.Text(root, width=20, height=5, state="disabled")
-result_text.pack()
-root.mainloop()
+        self.generate_button = ttk.Button(root, text="Сгенерировать и вычислить", command=self.generate_and_calculate)
+        self.generate_button.pack()
+        self.output_text = tk.Text(root, height=20, width=60)
+        self.output_text.pack()
+
+    def diagonal_product(self, matrix):
+        n = matrix.shape[0]
+        product = 1
+        for i in range(n):
+            product *= matrix[i, i]
+        return product
+
+    def generate_random_matrix(self, size):
+        matrix = np.zeros((size * 2, size * 2), dtype=int)
+        for i in range(size * 2):
+            for j in range(size * 2):
+                matrix[i, j] = np.random.randint(1, 10)
+        return matrix
+
+    def find_best_matrix(self, original_matrix):
+        n = original_matrix.shape[0]
+        max_product = 0
+        best_matrix = None
+
+        for perm_top in ['AB', 'BA']:
+            for perm_bottom in ['CD', 'DC']:
+                perm_matrix = np.copy(original_matrix)
+                if perm_top == 'AB':
+                    perm_matrix[:n // 2, :n // 2] = original_matrix[:n // 2, :n // 2]
+                    perm_matrix[:n // 2, n // 2:] = original_matrix[:n // 2, n // 2:]
+                else:
+                    perm_matrix[:n // 2, :n // 2] = original_matrix[:n // 2, n // 2:]
+                    perm_matrix[:n // 2, n // 2:] = original_matrix[:n // 2, :n // 2]
+
+                if perm_bottom == 'CD':
+                    perm_matrix[n // 2:, n // 2:] = original_matrix[n // 2:, n // 2:]
+                else:
+                    perm_matrix[n // 2:, n // 2:] = original_matrix[n // 2:, :n // 2]
+                    perm_matrix[n // 2:, :n // 2] = original_matrix[n // 2:, n // 2:]
+
+                prod = self.diagonal_product(perm_matrix)
+
+                if prod > max_product:
+                    max_product = prod
+                    best_matrix = perm_matrix
+
+        return best_matrix
+
+    def generate_and_calculate(self):
+        size = int(self.size_entry.get())
+        original_matrix = self.generate_random_matrix(size)
+        best_matrix = self.find_best_matrix(original_matrix)
+
+        result_text = "Изначальная матрицa:\n" + str(original_matrix) + "\n\nВарианты перестановок:\n"
+        for perm_top in ['AB', 'BA']:
+            for perm_bottom in ['CD', 'DC']:
+                perm_matrix = np.copy(original_matrix)
+                if perm_top == 'AB':
+                    perm_matrix[:size, :size] = original_matrix[:size, :size]
+                    perm_matrix[:size, size:] = original_matrix[:size, size:]
+                else:
+                    perm_matrix[:size, :size] = original_matrix[:size, size:]
+                    perm_matrix[:size, size:] = original_matrix[:size, :size]
+
+                if perm_bottom == 'CD':
+                    perm_matrix[size:, size:] = original_matrix[size:, size:]
+                else:
+                    perm_matrix[size:, size:] = original_matrix[size:, :size]
+                    perm_matrix[size:, :size] = original_matrix[size:, size:]
+
+                result_text += str(perm_matrix) + "\n"
+
+        result_text += "\nЛучшая матрицa:\n" + str(best_matrix)
+        diagonal_prod = self.diagonal_product(best_matrix)
+        result_text += f"\nРезультат произведения на главной диагонали лучшей матрицы: {diagonal_prod}"
+
+        self.output_text.delete(1.0, tk.END)
+        self.output_text.insert(tk.END, result_text) 
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = MatrixPermutationApp(root)
+    root.mainloop()
