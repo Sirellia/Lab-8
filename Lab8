@@ -1,7 +1,8 @@
 import numpy as np
 import tkinter as tk
 from tkinter import ttk
-from tkinter import messagebox
+from tkinter import messagebox, simpledialog
+
 
 class MatrixPermutationApp:
     def __init__(self, root):
@@ -38,11 +39,25 @@ class MatrixPermutationApp:
 
     def generate_and_calculate(self):
         size_str = self.size_entry.get()
-        if not size_str.isdigit():
-            messagebox.showerror("Ошибка", "Введите число в поле размера подматрицы.")
+
+        # Запрашиваем у пользователя систему счисления для ввода
+        system_choice = simpledialog.askstring("Система счисления", "Введите систему счисления (16 или 10):")
+
+        if system_choice:
+            system_choice = system_choice.strip().lower()
+            if system_choice == '16':
+                size = int(size_str, 16)
+            elif system_choice == '10':
+                if not size_str.isdigit():
+                    messagebox.showerror("Ошибка", "Введите корректное число.")
+                    return
+                size = int(size_str)
+            else:
+                messagebox.showerror("Ошибка", "Введите 10 или 16 в поле системы счисления.")
+                return
+        else:
             return
 
-        size = int(size_str)
         original_matrix = self.generate_random_matrix(size)
         best_matrix, diagonal_prod = self.find_best_matrix(original_matrix)
 
@@ -122,6 +137,7 @@ class MatrixPermutationApp:
     def show_diagonal_product(self, diagonal_product):
         result = f"Результат произведения на главной диагонали лучшей матрицы: {diagonal_product}"
         messagebox.showinfo("Результат", result)
+
 
 if __name__ == "__main__":
     root = tk.Tk()
