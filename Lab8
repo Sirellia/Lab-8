@@ -1,8 +1,6 @@
 import numpy as np
 import tkinter as tk
-from tkinter import ttk
-from tkinter import messagebox, simpledialog
-
+from tkinter import ttk, simpledialog, messagebox
 
 class MatrixPermutationApp:
     def __init__(self, root):
@@ -11,13 +9,13 @@ class MatrixPermutationApp:
 
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
-        window_width = min(screen_width - 100, 800)  
-        window_height = min(screen_height - 100, 600)  
+        window_width = min(screen_width - 100, 800)
+        window_height = min(screen_height - 100, 600) 
         x = (screen_width - window_width) // 2
         y = (screen_height - window_height) // 2
         self.root.geometry(f'{window_width}x{window_height}+{x}+{y}')
 
-        self.label = ttk.Label(root, text="Введите размер подматрицы:")
+        self.label = ttk.Label(root, text="Введите размер подматрицы (До 32, из-за числа больше не всегда считает произведение):")
         self.label.pack()
 
         self.size_entry = ttk.Entry(root)
@@ -26,7 +24,7 @@ class MatrixPermutationApp:
         self.generate_button = ttk.Button(root, text="Сгенерировать и вычислить", command=self.generate_and_calculate)
         self.generate_button.pack()
 
-        self.output_text = tk.Text(root, wrap=tk.NONE, height=20, width=80)  # Размеры окна вывода
+        self.output_text = tk.Text(root, wrap=tk.NONE, height=20, width=80)
         self.output_text.pack(fill=tk.BOTH, expand=True)
 
         self.vertical_scroll = ttk.Scrollbar(self.output_text, command=self.output_text.yview, orient="vertical")
@@ -40,22 +38,25 @@ class MatrixPermutationApp:
     def generate_and_calculate(self):
         size_str = self.size_entry.get()
 
-        # Запрашиваем у пользователя систему счисления для ввода
-        system_choice = simpledialog.askstring("Система счисления", "Введите систему счисления (16 или 10):")
+        if not size_str:
+            messagebox.showerror("Ошибка", "Введите размер подматрицы.")
+            return
 
-        if system_choice:
-            system_choice = system_choice.strip().lower()
-            if system_choice == '16':
+        try:
+            if any(char in size_str.upper() for char in ['A', 'B', 'C', 'D', 'E', 'F']):
                 size = int(size_str, 16)
-            elif system_choice == '10':
-                if not size_str.isdigit():
-                    messagebox.showerror("Ошибка", "Введите корректное число.")
-                    return
-                size = int(size_str)
             else:
-                messagebox.showerror("Ошибка", "Введите 10 или 16 в поле системы счисления.")
-                return
-        else:
+                size = int(size_str)
+        except ValueError:
+            messagebox.showerror("Ошибка", "Неверный формат числа.")
+            return
+
+        if size == 0:
+            messagebox.showerror("Ошибка", "Размер подматрицы не может быть равен 0.")
+            return
+
+        if size < 0 or size > 50:
+            messagebox.showerror("Ошибка", "Размер подматрицы должен быть от 0 до 50.")
             return
 
         original_matrix = self.generate_random_matrix(size)
@@ -64,6 +65,10 @@ class MatrixPermutationApp:
         self.output_text.delete('1.0', tk.END)
 
         result_text = "Изначальная матрицa:\n" + self.format_matrix(original_matrix) + "\n\nВарианты перестановок:\n"
+
+        if diagonal_prod != 0:
+            self.show_diagonal_product(diagonal_prod)
+
         for perm_top in ['AB', 'BA']:
             for perm_bottom in ['CD', 'DC']:
                 perm_matrix = np.copy(original_matrix)
@@ -82,10 +87,9 @@ class MatrixPermutationApp:
 
                 result_text += self.format_matrix(perm_matrix) + "\n"
 
-        self.output_text.insert(tk.END, result_text)
+        result_text += "Лучшая матрица:\n" + self.format_matrix(best_matrix)
 
-        if best_matrix is not None:
-            self.show_diagonal_product(diagonal_prod)
+        self.output_text.insert(tk.END, result_text)
 
     def format_matrix(self, matrix):
         formatted_matrix = ""
@@ -95,19 +99,21 @@ class MatrixPermutationApp:
         return formatted_matrix
 
     def generate_random_matrix(self, size):
-        matrix = np.random.randint(1, 10, size=(size * 2, size * 2), dtype=int)
+        matrix = np.random.randint(1, 10, size=(size * 2, size * 2), dtype=np.int64)
         return matrix
 
     def diagonal_product(self, matrix):
-        n = matrix.shape[0]
-        product = 1
-        for i in range(n):
+        product = np.int64(1)
+        for i in range(matrix.shape[0]):
             product *= matrix[i, i]
+        if product == 0:
+            product = np.int64(1)
+
         return product
 
     def find_best_matrix(self, original_matrix):
         n = original_matrix.shape[0]
-        max_product = 0
+        max_product = np.int64(0)
         best_matrix = None
 
         for perm_top in ['AB', 'BA']:
@@ -135,9 +141,8 @@ class MatrixPermutationApp:
         return best_matrix, max_product
 
     def show_diagonal_product(self, diagonal_product):
-        result = f"Результат произведения на главной диагонали лучшей матрицы: {diagonal_product}"
+        result = f"Произведение на главной диагонали лучшей матрицы (Если результат равен единице, то попробуйте заново перегенерировать матрицу): {diagonal_product}"
         messagebox.showinfo("Результат", result)
-
 
 if __name__ == "__main__":
     root = tk.Tk()
