@@ -15,7 +15,7 @@ class MatrixPermutationApp:
         y = (screen_height - window_height) // 2
         self.root.geometry(f'{window_width}x{window_height}+{x}+{y}')
 
-        self.label = ttk.Label(root, text="Введите размер подматрицы (До 50, из-за числа больше не всегда считает произведение):")
+        self.label = ttk.Label(root, text="Введите размер подматрицы (До 40, из-за числа больше не всегда считает произведение):")
         self.label.pack()
 
         self.size_entry = ttk.Entry(root)
@@ -55,8 +55,8 @@ class MatrixPermutationApp:
             messagebox.showerror("Ошибка", "Размер подматрицы не может быть равен 0.")
             return
 
-        if size < 0 or size > 50:
-            messagebox.showerror("Ошибка", "Размер подматрицы должен быть от 0 до 50.")
+        if size < 0 or size > 40:
+            messagebox.showerror("Ошибка", "Размер подматрицы должен быть от 0 до 40.")
             return
 
         original_matrix = self.generate_random_matrix(size)
