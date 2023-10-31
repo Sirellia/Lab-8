@@ -10,12 +10,12 @@ class MatrixPermutationApp:
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
         window_width = min(screen_width - 100, 800)
-        window_height = min(screen_height - 100, 600) 
+        window_height = min(screen_height - 100, 600)
         x = (screen_width - window_width) // 2
         y = (screen_height - window_height) // 2
         self.root.geometry(f'{window_width}x{window_height}+{x}+{y}')
 
-        self.label = ttk.Label(root, text="Введите размер подматрицы (До 32, из-за числа больше не всегда считает произведение):")
+        self.label = ttk.Label(root, text="Введите размер подматрицы (До 50, из-за числа больше не всегда считает произведение):")
         self.label.pack()
 
         self.size_entry = ttk.Entry(root)
@@ -24,7 +24,7 @@ class MatrixPermutationApp:
         self.generate_button = ttk.Button(root, text="Сгенерировать и вычислить", command=self.generate_and_calculate)
         self.generate_button.pack()
 
-        self.output_text = tk.Text(root, wrap=tk.NONE, height=20, width=80)
+        self.output_text = tk.Text(root, wrap=tk.NONE, height=20, width=80)  # Размеры окна вывода
         self.output_text.pack(fill=tk.BOTH, expand=True)
 
         self.vertical_scroll = ttk.Scrollbar(self.output_text, command=self.output_text.yview, orient="vertical")
@@ -105,7 +105,7 @@ class MatrixPermutationApp:
     def diagonal_product(self, matrix):
         product = np.int64(1)
         for i in range(matrix.shape[0]):
-            product *= matrix[i, i]
+            product = np.multiply(product, matrix[i, i], dtype=np.int64)
         if product == 0:
             product = np.int64(1)
 
@@ -141,7 +141,7 @@ class MatrixPermutationApp:
         return best_matrix, max_product
 
     def show_diagonal_product(self, diagonal_product):
-        result = f"Произведение на главной диагонали лучшей матрицы (Если результат равен единице, то попробуйте заново перегенерировать матрицу): {diagonal_product}"
+        result = f"Произведение на главной диагонали лучшей матрицы (Если результат равен 1, то попробуйте заново перегенерировать матрицу): {diagonal_product}"
         messagebox.showinfo("Результат", result)
 
 if __name__ == "__main__":
